@@ -2,36 +2,35 @@
   background-color: var(--background);
 }
 
-.menu {
+.nav {
   display: flex;
   align-items: center;
   max-width: 1240px;
-  height: 56px;
   margin: 0 auto;
 }
 
-.menu_part_left {
+.leftBlock {
   display: flex;
   flex-basis: 35%;
 }
 
-.link {
+.navLink {
   display: flex;
   color: var(--text-inactive-color);
   text-decoration: none;
 }
 
-.link_active {
+.navLinkActive {
   color: var(--text-primary-color);
 }
 
-.link_position_last {
+.navLinkLast {
   display: flex;
   flex-basis: 35%;
   justify-content: flex-end;
 }
 
-.logo {
+.logoBlock {
   display: flex;
   align-items: center;
   margin: 0 auto;
