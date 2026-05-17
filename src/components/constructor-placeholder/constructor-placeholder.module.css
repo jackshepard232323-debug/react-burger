@@ -1,0 +1,35 @@
+.placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 80px;
+  background-color: #1c1c21;
+  border: 2px dashed #4c4c5b;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.placeholderTop {
+  border-top-left-radius: 80px;
+  border-top-right-radius: 80px;
+}
+
+.placeholderBottom {
+  border-bottom-right-radius: 80px;
+  border-bottom-left-radius: 80px;
+}
+
+.placeholderMiddle {
+  border-radius: 40px;
+}
+
+.dropping {
+  border-color: #4c4cff;
+}
+
+.highlight {
+  background-color: #2a2a52;
+  border-color: #4c4cff;
+}

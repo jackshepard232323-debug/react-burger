@@ -15,3 +15,17 @@ export const ingredientPropType = PropTypes.shape({
   image_mobile: PropTypes.string.isRequired,
   image_large: PropTypes.string.isRequired,
 });
+
+export const constructorIngredientPropType = PropTypes.shape({
+  uid: PropTypes.string.isRequired,
+  _id: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(ALLOWED_TYPES).isRequired,
+  name: PropTypes.string.isRequired,
+  price: PropTypes.number.isRequired,
+  image: PropTypes.string.isRequired,
+});
+
+export const DND_TYPES = {
+  ingredient: 'ingredient',
+  constructorItem: 'constructor-item',
+};

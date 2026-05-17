@@ -1,9 +1,10 @@
 import { Tab } from '@krgaa/react-developer-burger-ui-components';
-import PropTypes from 'prop-types';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { IngredientCard } from '@components/ingredient-card/ingredient-card';
-import { ingredientPropType } from '@utils/prop-types';
+import { setCurrentIngredient } from '@services/ingredient-details/slice';
+import { selectIngredientsByCategory } from '@services/ingredients/slice';
 
 import styles from './burger-ingredients.module.css';
 
@@ -15,7 +16,10 @@ const CATEGORY_TITLES = {
   main: 'Начинки',
 };
 
-export const BurgerIngredients = ({ ingredients, onIngredientClick }) => {
+export const BurgerIngredients = () => {
+  const dispatch = useDispatch();
+  const groups = useSelector(selectIngredientsByCategory);
+
   const [currentTab, setCurrentTab] = useState('bun');
 
   const scrollAreaRef = useRef(null);
@@ -32,19 +36,28 @@ export const BurgerIngredients = ({ ingredients, onIngredientClick }) => {
     []
   );
 
-  const groups = useMemo(() => {
-    const initial = CATEGORY_ORDER.reduce((acc, key) => {
-      acc[key] = [];
-      return acc;
-    }, {});
+  const handleScroll = useCallback(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+    const containerTop = scrollArea.getBoundingClientRect().top;
 
-    return ingredients.reduce((acc, entry) => {
-      if (acc[entry.type]) {
-        acc[entry.type].push(entry);
+    let nearest = currentTab;
+    let nearestDistance = Infinity;
+
+    CATEGORY_ORDER.forEach((category) => {
+      const heading = headingsMap.current[category];
+      if (!heading) return;
+      const distance = Math.abs(heading.getBoundingClientRect().top - containerTop);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = category;
       }
-      return acc;
-    }, initial);
-  }, [ingredients]);
+    });
+
+    if (nearest !== currentTab) {
+      setCurrentTab(nearest);
+    }
+  }, [currentTab]);
 
   const onTabClick = useCallback((nextTab) => {
     setCurrentTab(nextTab);
@@ -55,6 +68,13 @@ export const BurgerIngredients = ({ ingredients, onIngredientClick }) => {
       scrollArea.scrollTo({ top, behavior: 'smooth' });
     }
   }, []);
+
+  const onCardClick = useCallback(
+    (ingredient) => {
+      dispatch(setCurrentIngredient(ingredient));
+    },
+    [dispatch]
+  );
 
   return (
     <section className={styles.root}>
@@ -74,7 +94,11 @@ export const BurgerIngredients = ({ ingredients, onIngredientClick }) => {
         </ul>
       </nav>
 
-      <div ref={scrollAreaRef} className={`${styles.scrollArea} custom-scroll mt-10`}>
+      <div
+        ref={scrollAreaRef}
+        onScroll={handleScroll}
+        className={`${styles.scrollArea} custom-scroll mt-10`}
+      >
         {CATEGORY_ORDER.map((category) => (
           <section key={category} className={styles.group}>
             <h2
@@ -88,8 +112,7 @@ export const BurgerIngredients = ({ ingredients, onIngredientClick }) => {
                 <IngredientCard
                   key={entry._id}
                   ingredient={entry}
-                  count={1}
-                  onClick={onIngredientClick}
+                  onClick={onCardClick}
                 />
               ))}
             </ul>
@@ -98,9 +121,4 @@ export const BurgerIngredients = ({ ingredients, onIngredientClick }) => {
       </div>
     </section>
   );
-};
-
-BurgerIngredients.propTypes = {
-  ingredients: PropTypes.arrayOf(ingredientPropType).isRequired,
-  onIngredientClick: PropTypes.func.isRequired,
 };

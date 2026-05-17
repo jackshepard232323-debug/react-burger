@@ -1,17 +1,36 @@
 import { Counter, CurrencyIcon } from '@krgaa/react-developer-burger-ui-components';
 import PropTypes from 'prop-types';
+import { useDrag } from 'react-dnd';
+import { useSelector } from 'react-redux';
 
-import { ingredientPropType } from '@utils/prop-types';
+import { selectIngredientCounts } from '@services/burger-constructor/slice';
+import { DND_TYPES, ingredientPropType } from '@utils/prop-types';
 
 import styles from './ingredient-card.module.css';
 
-export const IngredientCard = ({ ingredient, count, onClick }) => {
+export const IngredientCard = ({ ingredient, onClick }) => {
+  const counts = useSelector(selectIngredientCounts);
+  const count = counts[ingredient._id] || 0;
+
+  const [{ isDragging }, dragRef] = useDrag({
+    type: DND_TYPES.ingredient,
+    item: ingredient,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
   const onCardClick = () => {
     onClick(ingredient);
   };
 
   return (
-    <li className={styles.box} onClick={onCardClick}>
+    <li
+      ref={dragRef}
+      className={styles.box}
+      onClick={onCardClick}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
+    >
       {count > 0 && <Counter count={count} size="default" />}
       <img
         src={ingredient.image}
@@ -29,10 +48,5 @@ export const IngredientCard = ({ ingredient, count, onClick }) => {
 
 IngredientCard.propTypes = {
   ingredient: ingredientPropType.isRequired,
-  count: PropTypes.number,
   onClick: PropTypes.func.isRequired,
-};
-
-IngredientCard.defaultProps = {
-  count: 0,
 };
