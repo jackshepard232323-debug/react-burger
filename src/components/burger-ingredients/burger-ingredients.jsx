@@ -1,9 +1,9 @@
 import { Tab } from '@krgaa/react-developer-burger-ui-components';
 import { useCallback, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { IngredientCard } from '@components/ingredient-card/ingredient-card';
-import { setCurrentIngredient } from '@services/ingredient-details/slice';
 import { selectIngredientsByCategory } from '@services/ingredients/slice';
 
 import styles from './burger-ingredients.module.css';
@@ -17,7 +17,8 @@ const CATEGORY_TITLES = {
 };
 
 export const BurgerIngredients = () => {
-  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const groups = useSelector(selectIngredientsByCategory);
 
   const [currentTab, setCurrentTab] = useState('bun');
@@ -71,9 +72,11 @@ export const BurgerIngredients = () => {
 
   const onCardClick = useCallback(
     (ingredient) => {
-      dispatch(setCurrentIngredient(ingredient));
+      navigate(`/ingredients/${ingredient._id}`, {
+        state: { background: location },
+      });
     },
-    [dispatch]
+    [navigate, location]
   );
 
   return (

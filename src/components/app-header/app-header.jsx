@@ -4,38 +4,53 @@ import {
   Logo,
   ProfileIcon,
 } from '@krgaa/react-developer-burger-ui-components';
+import { Link, NavLink } from 'react-router-dom';
 
 import styles from './app-header.module.css';
 
 export const AppHeader = () => {
+  const linkClass = ({ isActive }) =>
+    `${styles.navLink} ${isActive ? styles.navLinkActive : ''} pt-4 pb-4 pl-5 pr-5`;
+
+  const lastLinkClass = ({ isActive }) =>
+    `${styles.navLink} ${styles.navLinkLast} ${isActive ? styles.navLinkActive : ''} pt-4 pb-4 pl-5 pr-5`;
+
   return (
     <header className={styles.header}>
       <nav className={`${styles.nav} pt-5 pb-5`}>
         <div className={styles.leftBlock}>
-          <a
-            href="/"
-            className={`${styles.navLink} ${styles.navLinkActive} pt-4 pb-4 pl-5 pr-5`}
-          >
-            <BurgerIcon type="primary" />
-            <p className="text text_type_main-default ml-2">Конструктор</p>
-          </a>
-          <a href="/feed" className={`${styles.navLink} pt-4 pb-4 pl-5 pr-5`}>
-            <ListIcon type="secondary" />
-            <p className="text text_type_main-default ml-2">Лента заказов</p>
-          </a>
+          <NavLink to="/" end className={linkClass}>
+            {({ isActive }) => (
+              <>
+                <BurgerIcon type={isActive ? 'primary' : 'secondary'} />
+                <p className="text text_type_main-default ml-2">Конструктор</p>
+              </>
+            )}
+          </NavLink>
+          <NavLink to="/feed" className={linkClass}>
+            {({ isActive }) => (
+              <>
+                <ListIcon type={isActive ? 'primary' : 'secondary'} />
+                <p className="text text_type_main-default ml-2">Лента заказов</p>
+              </>
+            )}
+          </NavLink>
         </div>
 
         <div className={styles.logoBlock}>
-          <Logo />
+          <Link to="/">
+            <Logo />
+          </Link>
         </div>
 
-        <a
-          href="/profile"
-          className={`${styles.navLink} ${styles.navLinkLast} pt-4 pb-4 pl-5 pr-5`}
-        >
-          <ProfileIcon type="secondary" />
-          <p className="text text_type_main-default ml-2">Личный кабинет</p>
-        </a>
+        <NavLink to="/profile" className={lastLinkClass}>
+          {({ isActive }) => (
+            <>
+              <ProfileIcon type={isActive ? 'primary' : 'secondary'} />
+              <p className="text text_type_main-default ml-2">Личный кабинет</p>
+            </>
+          )}
+        </NavLink>
       </nav>
     </header>
   );

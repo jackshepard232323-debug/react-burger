@@ -1,0 +1,27 @@
+.page {
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  gap: 60px;
+  padding-top: 120px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+}
+
+.link {
+  padding: 12px 0;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.content {
+  width: 600px;
+}

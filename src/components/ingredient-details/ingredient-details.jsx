@@ -1,8 +1,19 @@
-import { ingredientPropType } from '@utils/prop-types';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+
+import { selectAllIngredients } from '@services/ingredients/slice';
 
 import styles from './ingredient-details.module.css';
 
-export const IngredientDetails = ({ ingredient }) => {
+export const IngredientDetails = () => {
+  const { id } = useParams();
+  const ingredients = useSelector(selectAllIngredients);
+  const ingredient = ingredients.find((item) => item._id === id);
+
+  if (!ingredient) {
+    return null;
+  }
+
   const nutritionRows = [
     { label: 'Калории,ккал', value: ingredient.calories },
     { label: 'Белки, г', value: ingredient.proteins },
@@ -34,8 +45,4 @@ export const IngredientDetails = ({ ingredient }) => {
       </ul>
     </div>
   );
-};
-
-IngredientDetails.propTypes = {
-  ingredient: ingredientPropType.isRequired,
 };
