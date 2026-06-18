@@ -2,91 +2,152 @@ import {
   Button,
   ConstructorElement,
   CurrencyIcon,
-  DragIcon,
 } from '@krgaa/react-developer-burger-ui-components';
-import PropTypes from 'prop-types';
-import { useMemo } from 'react';
+import { useDrop } from 'react-dnd';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { ingredientPropType } from '@utils/prop-types';
+import { ConstructorElementDraggable } from '@components/constructor-element-draggable/constructor-element-draggable';
+import { ConstructorPlaceholder } from '@components/constructor-placeholder/constructor-placeholder';
+import {
+  addIngredient,
+  selectBun,
+  selectConstructorIngredients,
+  selectOrderIngredientIds,
+  selectTotalPrice,
+} from '@services/burger-constructor/slice';
+import { createOrder } from '@services/order/actions';
+import { selectOrderIsPending } from '@services/order/slice';
+import { DND_TYPES } from '@utils/prop-types';
 
 import styles from './burger-constructor.module.css';
 
-export const BurgerConstructor = ({ ingredients, onOrderClick }) => {
-  const { selectedBun, innerItems, sum } = useMemo(() => {
-    const acc = {
-      selectedBun: null,
-      innerItems: [],
-      sum: 0,
-    };
+export const BurgerConstructor = () => {
+  const dispatch = useDispatch();
 
-    ingredients.forEach((entry) => {
-      if (entry.type === 'bun') {
-        if (!acc.selectedBun) {
-          acc.selectedBun = entry;
-          acc.sum += entry.price * 2;
-        }
-        return;
-      }
-      acc.innerItems.push(entry);
-      acc.sum += entry.price;
-    });
+  const bun = useSelector(selectBun);
+  const innerItems = useSelector(selectConstructorIngredients);
+  const totalPrice = useSelector(selectTotalPrice);
+  const orderIds = useSelector(selectOrderIngredientIds);
+  const isOrderPending = useSelector(selectOrderIsPending);
 
-    return acc;
-  }, [ingredients]);
+  const [{ isOverBunTop, canDropBunTop }, bunTopDropRef] = useDrop({
+    accept: DND_TYPES.ingredient,
+    canDrop: (item) => item.type === 'bun',
+    drop: (item) => {
+      dispatch(addIngredient(item));
+    },
+    collect: (monitor) => ({
+      isOverBunTop: monitor.isOver(),
+      canDropBunTop: monitor.canDrop(),
+    }),
+  });
 
-  if (!selectedBun) {
-    return null;
-  }
+  const [{ isOverBunBottom, canDropBunBottom }, bunBottomDropRef] = useDrop({
+    accept: DND_TYPES.ingredient,
+    canDrop: (item) => item.type === 'bun',
+    drop: (item) => {
+      dispatch(addIngredient(item));
+    },
+    collect: (monitor) => ({
+      isOverBunBottom: monitor.isOver(),
+      canDropBunBottom: monitor.canDrop(),
+    }),
+  });
+
+  const [{ isOverFillings, canDropFillings }, fillingsDropRef] = useDrop({
+    accept: DND_TYPES.ingredient,
+    canDrop: (item) => item.type !== 'bun',
+    drop: (item) => {
+      dispatch(addIngredient(item));
+    },
+    collect: (monitor) => ({
+      isOverFillings: monitor.isOver(),
+      canDropFillings: monitor.canDrop(),
+    }),
+  });
+
+  const onOrderClick = () => {
+    if (!bun || isOrderPending) return;
+    dispatch(createOrder(orderIds));
+  };
+
+  const canOrder = Boolean(bun) && !isOrderPending;
 
   return (
     <section className={styles.wrapper}>
-      <div className={styles.bunRow}>
-        <ConstructorElement
-          type="top"
-          isLocked={true}
-          text={`${selectedBun.name} (верх)`}
-          price={selectedBun.price}
-          thumbnail={selectedBun.image}
-        />
+      <div ref={bunTopDropRef} className={styles.bunRow}>
+        {bun ? (
+          <ConstructorElement
+            type="top"
+            isLocked={true}
+            text={`${bun.name} (верх)`}
+            price={bun.price}
+            thumbnail={bun.image}
+          />
+        ) : (
+          <ConstructorPlaceholder
+            position="top"
+            label="Выберите булку"
+            isOver={isOverBunTop}
+            canDrop={canDropBunTop}
+          />
+        )}
       </div>
 
-      <ul className={`${styles.middle} custom-scroll`}>
-        {innerItems.map((entry, idx) => (
-          <li key={`${entry._id}-${idx}`} className={styles.middleItem}>
-            <DragIcon type="primary" />
-            <ConstructorElement
-              text={entry.name}
-              price={entry.price}
-              thumbnail={entry.image}
-            />
-          </li>
-        ))}
+      <ul
+        ref={fillingsDropRef}
+        className={`${styles.middle} custom-scroll ${
+          canDropFillings ? styles.middleDropping : ''
+        } ${isOverFillings && canDropFillings ? styles.middleOver : ''}`}
+      >
+        {innerItems.length === 0 ? (
+          <ConstructorPlaceholder
+            position="middle"
+            label="Выберите начинку"
+            isOver={isOverFillings}
+            canDrop={canDropFillings}
+          />
+        ) : (
+          innerItems.map((entry, idx) => (
+            <ConstructorElementDraggable key={entry.uid} entry={entry} index={idx} />
+          ))
+        )}
       </ul>
 
-      <div className={styles.bunRow}>
-        <ConstructorElement
-          type="bottom"
-          isLocked={true}
-          text={`${selectedBun.name} (низ)`}
-          price={selectedBun.price}
-          thumbnail={selectedBun.image}
-        />
+      <div ref={bunBottomDropRef} className={styles.bunRow}>
+        {bun ? (
+          <ConstructorElement
+            type="bottom"
+            isLocked={true}
+            text={`${bun.name} (низ)`}
+            price={bun.price}
+            thumbnail={bun.image}
+          />
+        ) : (
+          <ConstructorPlaceholder
+            position="bottom"
+            label="Выберите булку"
+            isOver={isOverBunBottom}
+            canDrop={canDropBunBottom}
+          />
+        )}
       </div>
 
       <div className={styles.footer}>
         <div className={styles.footerPrice}>
-          <span className="text text_type_digits-medium mr-2">{sum}</span>
+          <span className="text text_type_digits-medium mr-2">{totalPrice}</span>
           <CurrencyIcon type="primary" />
         </div>
-        <Button htmlType="button" type="primary" size="large" onClick={onOrderClick}>
-          Оформить заказ
+        <Button
+          htmlType="button"
+          type="primary"
+          size="large"
+          onClick={onOrderClick}
+          disabled={!canOrder}
+        >
+          {isOrderPending ? 'Оформляем...' : 'Оформить заказ'}
         </Button>
       </div>
     </section>
   );
-};
-
-BurgerConstructor.propTypes = {
-  ingredients: PropTypes.arrayOf(ingredientPropType).isRequired,
-  onOrderClick: PropTypes.func.isRequired,
 };

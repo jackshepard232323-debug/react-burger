@@ -1,5 +1,6 @@
 import { Preloader } from '@krgaa/react-developer-burger-ui-components';
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { AppHeader } from '@components/app-header/app-header';
 import { BurgerConstructor } from '@components/burger-constructor/burger-constructor';
@@ -7,89 +8,44 @@ import { BurgerIngredients } from '@components/burger-ingredients/burger-ingredi
 import { IngredientDetails } from '@components/ingredient-details/ingredient-details';
 import { Modal } from '@components/modal/modal';
 import { OrderDetails } from '@components/order-details/order-details';
-import { getIngredients } from '@utils/api';
+import {
+  clearCurrentIngredient,
+  selectCurrentIngredient,
+} from '@services/ingredient-details/slice';
+import { fetchIngredients } from '@services/ingredients/actions';
+import {
+  selectIngredientsError,
+  selectIsFailure,
+  selectIsLoading,
+} from '@services/ingredients/slice';
+import { clearOrder, selectOrderNumber } from '@services/order/slice';
 
 import styles from './app.module.css';
 
-const REQUEST_STATUS = {
-  idle: 'idle',
-  pending: 'pending',
-  resolved: 'resolved',
-  rejected: 'rejected',
-};
-
-const initialRequestState = {
-  status: REQUEST_STATUS.pending,
-  data: [],
-  errorText: null,
-};
-
-const requestReducer = (state, action) => {
-  switch (action.type) {
-    case 'start':
-      return { ...state, status: REQUEST_STATUS.pending, errorText: null };
-    case 'resolve':
-      return { status: REQUEST_STATUS.resolved, data: action.payload, errorText: null };
-    case 'reject':
-      return { status: REQUEST_STATUS.rejected, data: [], errorText: action.payload };
-    default:
-      return state;
-  }
-};
-
-const MODAL_TYPES = {
-  ingredient: 'ingredient',
-  order: 'order',
-};
-
 export const App = () => {
-  const [request, dispatch] = useReducer(requestReducer, initialRequestState);
+  const dispatch = useDispatch();
 
-  const [openedModal, setOpenedModal] = useState(null);
-  const [currentIngredient, setCurrentIngredient] = useState(null);
+  const isLoading = useSelector(selectIsLoading);
+  const isFailure = useSelector(selectIsFailure);
+  const errorText = useSelector(selectIngredientsError);
+
+  const currentIngredient = useSelector(selectCurrentIngredient);
+  const orderNumber = useSelector(selectOrderNumber);
 
   useEffect(() => {
-    let cancelled = false;
+    dispatch(fetchIngredients());
+  }, [dispatch]);
 
-    const loadIngredients = async () => {
-      dispatch({ type: 'start' });
-      try {
-        const data = await getIngredients();
-        if (!cancelled) {
-          dispatch({ type: 'resolve', payload: data });
-        }
-      } catch (err) {
-        if (cancelled) return;
-        console.error('Ошибка загрузки ингредиентов:', err);
-        const message =
-          err instanceof Error ? err.message : 'Не удалось загрузить ингредиенты';
-        dispatch({ type: 'reject', payload: message });
-      }
-    };
+  const closeIngredientModal = () => {
+    dispatch(clearCurrentIngredient());
+  };
 
-    loadIngredients();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setOpenedModal(null);
-    setCurrentIngredient(null);
-  }, []);
-
-  const openOrderModal = useCallback(() => {
-    setOpenedModal(MODAL_TYPES.order);
-  }, []);
-
-  const openIngredientModal = useCallback((ingredient) => {
-    setCurrentIngredient(ingredient);
-    setOpenedModal(MODAL_TYPES.ingredient);
-  }, []);
+  const closeOrderModal = () => {
+    dispatch(clearOrder());
+  };
 
   const renderMain = () => {
-    if (request.status === REQUEST_STATUS.pending) {
+    if (isLoading) {
       return (
         <div className={styles.stateMessage}>
           <Preloader />
@@ -97,23 +53,18 @@ export const App = () => {
       );
     }
 
-    if (request.status === REQUEST_STATUS.rejected) {
+    if (isFailure) {
       return (
         <div className={styles.stateMessage}>
-          <p className="text text_type_main-medium">
-            Что-то пошло не так: {request.errorText}
-          </p>
+          <p className="text text_type_main-medium">Что-то пошло не так: {errorText}</p>
         </div>
       );
     }
 
     return (
       <>
-        <BurgerIngredients
-          ingredients={request.data}
-          onIngredientClick={openIngredientModal}
-        />
-        <BurgerConstructor ingredients={request.data} onOrderClick={openOrderModal} />
+        <BurgerIngredients />
+        <BurgerConstructor />
       </>
     );
   };
@@ -123,14 +74,14 @@ export const App = () => {
       <AppHeader />
       <main className={styles.main}>{renderMain()}</main>
 
-      {openedModal === MODAL_TYPES.ingredient && currentIngredient && (
-        <Modal title="Детали ингредиента" onClose={closeModal}>
+      {currentIngredient && (
+        <Modal title="Детали ингредиента" onClose={closeIngredientModal}>
           <IngredientDetails ingredient={currentIngredient} />
         </Modal>
       )}
 
-      {openedModal === MODAL_TYPES.order && (
-        <Modal onClose={closeModal}>
+      {orderNumber !== null && (
+        <Modal onClose={closeOrderModal}>
           <OrderDetails />
         </Modal>
       )}
