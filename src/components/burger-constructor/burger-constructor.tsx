@@ -5,10 +5,12 @@ import {
 } from '@krgaa/react-developer-burger-ui-components';
 import { useRef, type ReactElement } from 'react';
 import { useDrop } from 'react-dnd';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ConstructorElementDraggable } from '@components/constructor-element-draggable/constructor-element-draggable';
 import { ConstructorPlaceholder } from '@components/constructor-placeholder/constructor-placeholder';
+import { selectIsAuthenticated } from '@services/auth/slice';
 import {
   addIngredient,
   selectBun,
@@ -26,12 +28,15 @@ import styles from './burger-constructor.module.css';
 
 export const BurgerConstructor = (): ReactElement => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const bun = useAppSelector(selectBun);
   const innerItems = useAppSelector(selectConstructorIngredients);
   const totalPrice = useAppSelector(selectTotalPrice);
   const orderIds = useAppSelector(selectOrderIngredientIds);
   const isOrderPending = useAppSelector(selectOrderIsPending);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const bunTopRef = useRef<HTMLDivElement>(null);
   const bunBottomRef = useRef<HTMLDivElement>(null);
@@ -89,7 +94,13 @@ export const BurgerConstructor = (): ReactElement => {
   fillingsDropRef(fillingsRef);
 
   const onOrderClick = (): void => {
-    if (!bun || isOrderPending) return;
+    if (!bun || isOrderPending) {
+      return;
+    }
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     dispatch(createOrder(orderIds));
   };
 

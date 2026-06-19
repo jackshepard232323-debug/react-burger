@@ -22,6 +22,7 @@
 }
 
 .btnClose {
+  margin-left: auto;
   padding: 0;
   background: none;
   border: none;

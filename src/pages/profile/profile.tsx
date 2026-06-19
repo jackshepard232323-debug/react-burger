@@ -9,7 +9,7 @@ import styles from './profile.module.css';
 
 export const ProfilePage = (): ReactElement => {
   const linkClass = ({ isActive }: { isActive: boolean }): string =>
-    `text text_type_main-medium ${styles.link} ${isActive ? '' : 'text_color_inactive'}`;
+    `text text_type_main-medium ${styles.link} ${isActive ? styles.linkActive : 'text_color_inactive'}`;
   const dispatch = useAppDispatch();
 
   const onLogout = (): void => {
